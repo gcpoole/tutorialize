@@ -1,0 +1,16 @@
+Package: tutorialize
+Type: Package
+Title: Automate creation of simple learnr tutorials
+Version: 0.1.0
+Author: Geoffrey Poole
+Maintainer: The package maintainer <gpoole@montana.edu>
+Description: Tutorialize takes ordinary .Rmd files, structured as "answer keys"
+    and converts them to simple R markdown tutorials.  The advantage tutorialize
+    offers over writing tutorials directly is that an exercise, its solutions 
+    and grading can be managed from a single code chunk rather than coordinating
+    among three code chunks.  Code chucks interpreted by tutorialize can be 
+    mixed with standard learnr exercises, maintaining flexibility for edge
+    cases on how exercises should work.
+License: GPL3
+Encoding: UTF-8
+LazyData: true
