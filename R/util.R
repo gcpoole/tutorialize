@@ -19,3 +19,8 @@ tut_to_tibble <- function(x) {
 
   tib
 }
+
+#' @export
+submitToTA = function(x) {
+  learnr::correct()
+}
