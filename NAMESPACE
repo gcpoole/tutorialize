@@ -2,6 +2,7 @@
 
 export(recorder)
 export(submitToTA)
+export(tut_directory)
 export(tut_to_tibble)
 export(tutorialize)
 export(tutorialize_setup)

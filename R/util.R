@@ -1,3 +1,4 @@
+#' @export
 tut_directory <- function() {
   file.path("~", "_311_Tutorial_")
 }
