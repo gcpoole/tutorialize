@@ -1,95 +1,65 @@
-#' @export
-tutorialize_setup <- function(tutorial_name, package_dir = getwd()) {
-
-  # check to be sure package exists, tutorial exists, and answer key is not set
-  # up.
-  tutorial_dir <- get_tutorial_dirs(package_dir, tutorial_name)
-
-  # see if tutorial is already set up for tutorialize
-  key_dir <- file.path(tutorial_dir, "answer_key")
-  if(file.exists(key_dir))
-    stop("'", tutorial_dir, "' already contains an 'answer_key' directory.")
-
-  # make sure the .Rmd file exists
-  tutorial_file_name <- paste0(tutorial_name, ".Rmd")
-  tutorial_file_path <- file.path(tutorial_dir, tutorial_file_name)
-  if(!file.exists(tutorial_file_path))
-    stop("'", tutorial_file_path, "' not found.")
-
-  # create the answer key directory
-  created <- dir.create(key_dir)
-  if(!created) stop("Failed to create '", key_dir, "'")
-
-  # copy the tutorial .Rmd file to the answer_key directory
-  copied <- file.copy(
-    tutorial_file_path,
-    file.path(key_dir,  tutorial_file_name))
-
-  # if copy is successful, delete the original
-  if(copied)
-    removed <- file.remove(tutorial_file_path)
-  else
-    stop("Failed to copy '", tutorial_file_path, "' to '", key_dir, "'.")
-
-  # throw a warning if copy is successful but deletion is not.
-  if(!removed)
-    warning(
-      "'", tutorial_file_name, "' successfully copied to '",
-      key_dir, "' but could not be deleted from '", tutorial_dir)
-
-  # If we got here, must be all good!  So return TRUE!
-  TRUE
-}
-
-# Gets the tutorial directories from the specified package.  Returns one
-# directory when tutorial_name is specified.  Returns all directories when
-# tutorial_name is NULL.  `has_key` filters directories to those that have an
-# answer_key dir within them (ignored when tutorial_name is specified).
-get_tutorial_dirs <- function(package_dir, tutorial_name = NULL, has_key = TRUE) {
-  # make sure all is well with package_dir
-  check_dir(package_dir, FALSE)
-  # create path to `\inst\tutorials`
-  tutorials_dir <- file.path(package_dir, "inst", "tutorials")
-  # make sure all is well with tutorial directory.
-  check_dir(tutorials_dir)
-  # if directory for a specific tutorial is requested...
-  if(!is.null(tutorial_name)) {
-    # ... if so check to be sure it's valid and return it.
-    tutorial_dirs <- file.path(tutorials_dir, tutorial_name)
-    check_dir(tutorial_dirs, FALSE)
-  } else {
-    # ... if not get all the files and dirs in \inst\tutorials
-    all_file_info <-
-      file.info(
-        file.path(
-          tutorials_dir,
-          dir(tutorials_dir)))
-    # eliminate files, leaving only dirs
-    dir_info <- all_file_info[all_file_info$isdir,]
-    tutorial_dirs <- rownames(dir_info)
-    # if only directories with 'answer_key' subdirs are requested, filter that
-    # as well.
-    if(has_key) {
-      tutorial_dirs <-
-        tutorial_dirs[
-          sapply(tutorial_dirs, \(x) file.exists(file.path(x, "answer_key")))
-        ]
-    }
-  }
-  tutorial_dirs
-}
-
-# check to see that a specified directory exists and return a custom message
-# depending on value of `expect_use_tutorial`.  When TRUE, message points
-# user toward usethis::use_tutorial.  Otherwise, generic "not found" message.
-check_dir <- function(dir_name, expect_use_tutorial = TRUE) {
-  if(!file.exists(dir_name))
-    if(expect_use_tutorial)
-      stop("`tutorialize()` requires tutorials created by 'usethis::use_tutorial()'.")
-    else
-      stop("Directory '", dir_name, "' not found.")
-}
-
+#' Create simple learnr tutorials from an "answer key" style RMarkdown document
+#'
+#' Set up the structure necessary to create tutorialized learnr tutorials and
+#' create them
+#'
+#' @details
+#'
+#' To create a new tutorial using tutorialize:
+#'
+#' \itemize{
+#'
+#'   \item create a package project
+#'
+#'   \item from within the package project in R Studio, run
+#' \code{usethis::use_tutorial} to create a straw learnr tutorial.  The tutorial
+#' file will be created in an /inst/tutorials directory in your package project.
+#'
+#'   \item run tutorialize_setup using the directory name of the tutorial.  This
+#' will create an "answer_key" directory within the tutorial's directory and
+#' move the straw learnr file to the "answer_key" directory.
+#'
+#'   \item edit the tutorial file in the "answer_key" directory using the
+#'   tips below.
+#'
+#'   \item When you are ready to tutorialize your answer_keys, run the
+#' \code{tutorialize} which will recursively search for any answer_keys and
+#' process them, creating a learnr tutorial file of the same name up one
+#' directory from the answer key file.
+#' }
+#'
+#' TIPS
+#'
+#' \code{tutorialize} will recognize and process any chuck set with
+#' "exercise=tutorialize" as an option.  If this option is set:
+#'
+#' \itemize{
+#'
+#' \item Any code in the chunk will be moved to the learn r "solution" block
+#'
+#' \item Any text prefaced by `#+` at the beginning of the line will not be
+#' moved to the setup chuck, but will be stripped of `#+` and will remain as
+#' "starter" code for the exercise
+#'
+#' \item A learn "code-check" block will be added, containing a call to
+#' \code{\link{grade_code()}}
+#'
+#' }
+#'
+#' A custom learnr-style "setup" chunk can be used before any tutorialze chunk.
+#' if "exercise-setup=foo" is included as an option for a tutorialize chunk,
+#' then the setup chunk for code chunk foo and any assignments made in the
+#' solution chunk for foo will be added to the current chunk's setup chunk. This
+#' allows for chaining of tutorialized chunks.
+#'
+#' Manually created learnr chunks (those with "exercise=TRUE" option) can be
+#' intermingled with tutorialize chunks.  The learnr chunks and will be passed
+#' through tutorialize unaltered.
+#'
+#' @param package_dir The root directory of the package that contains answer key
+#'   files to be tutorialized
+#' @param tutorial_name The name of the diretory containing a straw tutorial
+#'   file created by \code{\link{usethis::use_tutorial}
 #' @export
 tutorialize <- function(package_dir = getwd()) {
 
@@ -304,6 +274,99 @@ get_solution_code <- function(chunk, chunk_name) {
     "```",
     ""
   )
+}
+
+#' @rdname tutorialize
+#' @export
+tutorialize_setup <- function(tutorial_name, package_dir = getwd()) {
+
+  # check to be sure package exists, tutorial exists, and answer key is not set
+  # up.
+  tutorial_dir <- get_tutorial_dirs(package_dir, tutorial_name)
+
+  # see if tutorial is already set up for tutorialize
+  key_dir <- file.path(tutorial_dir, "answer_key")
+  if(file.exists(key_dir))
+    stop("'", tutorial_dir, "' already contains an 'answer_key' directory.")
+
+  # make sure the .Rmd file exists
+  tutorial_file_name <- paste0(tutorial_name, ".Rmd")
+  tutorial_file_path <- file.path(tutorial_dir, tutorial_file_name)
+  if(!file.exists(tutorial_file_path))
+    stop("'", tutorial_file_path, "' not found.")
+
+  # create the answer key directory
+  created <- dir.create(key_dir)
+  if(!created) stop("Failed to create '", key_dir, "'")
+
+  # copy the tutorial .Rmd file to the answer_key directory
+  copied <- file.copy(
+    tutorial_file_path,
+    file.path(key_dir,  tutorial_file_name))
+
+  # if copy is successful, delete the original
+  if(copied)
+    removed <- file.remove(tutorial_file_path)
+  else
+    stop("Failed to copy '", tutorial_file_path, "' to '", key_dir, "'.")
+
+  # throw a warning if copy is successful but deletion is not.
+  if(!removed)
+    warning(
+      "'", tutorial_file_name, "' successfully copied to '",
+      key_dir, "' but could not be deleted from '", tutorial_dir)
+
+  # If we got here, must be all good!  So return TRUE!
+  TRUE
+}
+
+# Gets the tutorial directories from the specified package.  Returns one
+# directory when tutorial_name is specified.  Returns all directories when
+# tutorial_name is NULL.  `has_key` filters directories to those that have an
+# answer_key dir within them (ignored when tutorial_name is specified).
+get_tutorial_dirs <- function(package_dir, tutorial_name = NULL, has_key = TRUE) {
+  # make sure all is well with package_dir
+  check_dir(package_dir, FALSE)
+  # create path to `\inst\tutorials`
+  tutorials_dir <- file.path(package_dir, "inst", "tutorials")
+  # make sure all is well with tutorial directory.
+  check_dir(tutorials_dir)
+  # if directory for a specific tutorial is requested...
+  if(!is.null(tutorial_name)) {
+    # ... if so check to be sure it's valid and return it.
+    tutorial_dirs <- file.path(tutorials_dir, tutorial_name)
+    check_dir(tutorial_dirs, FALSE)
+  } else {
+    # ... if not get all the files and dirs in \inst\tutorials
+    all_file_info <-
+      file.info(
+        file.path(
+          tutorials_dir,
+          dir(tutorials_dir)))
+    # eliminate files, leaving only dirs
+    dir_info <- all_file_info[all_file_info$isdir,]
+    tutorial_dirs <- rownames(dir_info)
+    # if only directories with 'answer_key' subdirs are requested, filter that
+    # as well.
+    if(has_key) {
+      tutorial_dirs <-
+        tutorial_dirs[
+          sapply(tutorial_dirs, \(x) file.exists(file.path(x, "answer_key")))
+        ]
+    }
+  }
+  tutorial_dirs
+}
+
+# check to see that a specified directory exists and return a custom message
+# depending on value of `expect_use_tutorial`.  When TRUE, message points
+# user toward usethis::use_tutorial.  Otherwise, generic "not found" message.
+check_dir <- function(dir_name, expect_use_tutorial = TRUE) {
+  if(!file.exists(dir_name))
+    if(expect_use_tutorial)
+      stop("`tutorialize()` requires tutorials created by 'usethis::use_tutorial()'.")
+    else
+      stop("Directory '", dir_name, "' not found.")
 }
 
 get_assignment_ops <- function(chunk) {
