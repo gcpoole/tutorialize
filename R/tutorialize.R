@@ -61,7 +61,9 @@
 #' @param tutorial_name The name of the diretory containing a straw tutorial
 #'   file created by \code{\link{usethis::use_tutorial}
 #' @export
-tutorialize <- function(package_dir = getwd()) {
+tutorialize <- function(package_dir = getwd(), choose = F) {
+
+  if(choose) package_dir <- dirname(file.choose())
 
   file_warning <- "<!-- File created by tutorialize.  Do not edit by hand. -->"
 
@@ -87,9 +89,21 @@ tutorialize <- function(package_dir = getwd()) {
     markdown <- readLines(keyfile_path, warn = F)
 
     # strip out the comments from the markdown
-    markdown <- paste(markdown, collapse = "<new><line>")
+    markdown <- paste(markdown, collapse = "\r")
     # regmatches(markdown, gregexec("<!--.*?-->", markdown, perl = T))
-    markdown <- gsub("<!--.*?-->", "", markdown)
+    markdown <-
+      regmatches(
+        markdown,
+        gregexpr(
+          # returns code outside of comments OR "\r" from anywhere.
+          "((^|-->).*?(<!--|$))|(\\r)",
+          markdown,
+          perl = T
+        )
+      )
+    markdown <- gsub("(<!--)|(-->)", "", markdown[[1]])
+    markdown <- paste0(markdown, collapse = "")
+
     if(!grepl("gradethis_setup", markdown))
       stop("A call to 'gradethis_setup()' in the setup chunk is required.")
     if(!grepl("tutorial\\.event_recorder", markdown))
@@ -98,13 +112,13 @@ tutorialize <- function(package_dir = getwd()) {
       warning("No tutorial storage location is defined in '", file_name, "'.")
     if(grepl("tutorialize::recorder", markdown)) {
       if(
-        !grepl("tutorial:[[:space:]]*<new><line>", markdown) ||
-        !grepl("<new><line>[[:space:]]+id:", markdown)
+        !grepl("tutorial:[[:space:]]*\\r", markdown) ||
+        !grepl("\\r[[:space:]]+id:", markdown)
       ) stop("Tutorial name (`id:` under 'tutorial:' in YAML header) must be defined to use tutorialize::recorder")
 
     }
 
-    markdown <- strsplit(markdown, "<new><line>")[[1]]
+    markdown <- strsplit(markdown, "\r")[[1]]
 
     yaml_delimiter <- which(grepl("^---[[:space:]]*$", markdown))
     if(length(yaml_delimiter) < 2) {
@@ -183,17 +197,18 @@ tutorialize <- function(package_dir = getwd()) {
               setup_code <- character(0)
 
               # there might be manually-defined setup_code for the chunk
-              # referenced by the setup token.  If so, find it and pull the
-              # assignment_ops
+              # referenced by the setup token.  If so, find it and include it
+              # as long as it's not one that will be removed.
               referenced_manual_setup <- paste0(setup_source, "-setup")
-              if(!is.null(chunks[[referenced_manual_setup]]) && !referenced_manual_setup %in% setups_to_remove)
-                setup_code <- c(setup_code, get_assignment_ops(chunks[[referenced_manual_setup]]))
+              if(!is.null(chunks[[referenced_manual_setup]]) && !referenced_manual_setup %in% setups_to_remove) {
+                setup_code <- c(setup_code, get_chunk_body(chunks[[referenced_manual_setup]]))
+              }
               # now parse the tutorialize setup chunk
               setup_code <- c(
                 setup_code,
                 get_assignment_ops(chunks[[setup_source]][["setup"]]))
 
-              # now look for solution code in the referenced chunk
+              # now get assignments from solution code in the referenced chunk
               solution_code <- get_assignment_ops(chunks[[setup_source]][["solution"]])
               setup_code <- c(setup_code, solution_code)
 
@@ -204,7 +219,7 @@ tutorialize <- function(package_dir = getwd()) {
                 current_manual_setup_chunk <- chunks[[current_manual_setup]]
                 setup_code <- c(
                   setup_code,
-                  current_manual_setup_chunk[!grepl("^```", current_manual_setup_chunk)])
+                  get_chunk_body(current_manual_setup_chunk))
                 # tag the manual setup chunk for the current code for removal
                 # because it's been added to the tutorialize setup chunk we are
                 # building
@@ -369,9 +384,14 @@ check_dir <- function(dir_name, expect_use_tutorial = TRUE) {
       stop("Directory '", dir_name, "' not found.")
 }
 
+get_chunk_body <- function(chunk) {
+  # remove chunk delimiters and any empty lines
+  chunk[!grepl("^```", chunk) & !grepl("^[[:space:]]*$", chunk)]
+}
+
 get_assignment_ops <- function(chunk) {
   if(length(chunk) == 0) return(character(0))
-  chunk <- chunk[!grepl("^```", chunk) & nchar(chunk) > 0]
+  chunk <- get_chunk_body(chunk)
   commands <- parse(text = chunk)
   command_strings <- lapply(commands, deparse)
   types <- sapply(commands, class)
