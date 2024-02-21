@@ -119,7 +119,7 @@ import_D2L_files <- function(extracted_path = dirname(file.choose())) {
       tut_to_tibble(tutorial_data)
       }
     ) %>%
-    bind_rows()
+    dplyr::bind_rows()
 }
 
 
@@ -147,12 +147,12 @@ tut_to_tibble <- function(x) {
   tib <-
     x %>%
     lapply(\(x) x[-length(x)]) %>%
-    bind_rows() %>%
-    mutate(
+    dplyr::bind_rows() %>%
+    dplyr::mutate(
       label = extract_tutorial_data(data_list, "label"),
       code = extract_tutorial_data(data_list, "code")
     ) %>%
-    mutate(data = data_list)
+    dplyr::mutate(data = data_list)
 
   tib
 }
