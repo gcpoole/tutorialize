@@ -12,8 +12,6 @@ mongo_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
         timestamp = Sys.time(),
         data = list(recursive_unclass(data)))
 
-    print(new_data)
-
     #write the data...
 #    events_collection$insert(new_data)
     getOption("tutorial.events_collection")$insert(new_data, auto_unbox =
