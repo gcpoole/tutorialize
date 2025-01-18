@@ -12,6 +12,9 @@ tutorialize_setup(tutorial_name, package_dir = getwd())
 \arguments{
 \item{package_dir}{The root directory of the package that contains answer key
 files to be tutorialized}
+
+\item{tutorial_name}{The name of the diretory containing a straw tutorial
+file created by \code{\link{usethis::use_tutorial}}}
 }
 \description{
 Set up the structure necessary to create tutorialized learnr tutorials and

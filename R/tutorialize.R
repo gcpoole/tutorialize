@@ -59,7 +59,7 @@
 #' @param package_dir The root directory of the package that contains answer key
 #'   files to be tutorialized
 #' @param tutorial_name The name of the diretory containing a straw tutorial
-#'   file created by \code{\link{usethis::use_tutorial}
+#'   file created by \code{\link{usethis::use_tutorial}}
 #' @export
 tutorialize <- function(package_dir = getwd(), choose = F) {
 

@@ -2,6 +2,7 @@
 
 export(check_D2L_files)
 export(import_D2L_files)
+export(mongo_recorder)
 export(process_D2L_files)
 export(recorder)
 export(submitToTA)
@@ -10,4 +11,3 @@ export(tut_to_tibble)
 export(tutorialize)
 export(tutorialize_setup)
 export(unzip_D2L_files)
-importFrom(dplyr,"%>%")

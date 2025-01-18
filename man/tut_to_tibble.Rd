@@ -6,6 +6,11 @@
 \usage{
 tut_to_tibble(x)
 }
+\arguments{
+\item{x}{The list that ends up in a \code{tutorial_data} variable in the
+global environment after using \code{\link{load}} to read in an individual
+student's tutorial submission file.}
+}
 \value{
 A tibble version of the data in \code{x}
 }

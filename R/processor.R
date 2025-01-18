@@ -137,7 +137,7 @@ import_D2L_files <- function(extracted_path = dirname(file.choose())) {
 #' @return A tibble version of the data in \code{x}
 #'
 #' @param x The list that ends up in a \code{tutorial_data} variable in the
-#'   global environment after using \code\{link{load}} to read in an individual
+#'   global environment after using \code{\link{load}} to read in an individual
 #'   student's tutorial submission file.
 #'
 #' @export
