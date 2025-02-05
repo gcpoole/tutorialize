@@ -14,7 +14,7 @@ Description: Tutorialize takes ordinary .Rmd files, structured as "answer keys"
 License: GPL3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     dplyr,
     gradethis,

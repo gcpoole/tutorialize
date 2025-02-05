@@ -1,8 +1,8 @@
 #' @export
 mongo_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
 
-  if(!grepl("^section", event)) {
     #create data structure
+  if(!grepl("^section", event)) {
     new_data <-
       dplyr::tibble(
         user = user_id,
@@ -12,10 +12,10 @@ mongo_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
         timestamp = Sys.time(),
         data = list(recursive_unclass(data)))
 
+    # print(new_data)
     #write the data...
-#    events_collection$insert(new_data)
-    getOption("tutorial.events_collection")$insert(new_data, auto_unbox =
-                                                     TRUE)
+    #    events_collection$insert(new_data)
+    getOption("tutorial.events_collection")$insert(new_data, auto_unbox = TRUE)
   }
 }
 
