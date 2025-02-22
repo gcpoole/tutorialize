@@ -5,14 +5,17 @@
 \alias{event_stats}
 \title{Get events and behavioral statistics for each user and tutorial response.}
 \usage{
-fetch_events(events_collection)
+fetch_events(events_collection, tutorial = NULL)
 
-event_stats(events)
+event_stats(events, events_collection)
 }
 \arguments{
 \item{events_collection}{Mongo collection object for events collection}
 
 \item{events}{A tibble derived from \code{fetch_events()}}
+
+\item{tutotial}{The name of the tutorial for which events are requested.
+NULL = all tutorials.}
 }
 \value{
 A tibble of statistics for each survey question.

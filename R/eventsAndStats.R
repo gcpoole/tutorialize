@@ -54,6 +54,18 @@ extract_event_data <- function(events, field_name, column_name = field_name) {
   events
 }
 
+#' Provides the names of the various tutorials that have been started by users
+#'
+#' @param events_collection Mongo collection objects pointing to the events
+#'   collection.
+#' @returns A vector of tutorial names.
+#' @export
+list_tutorials <- function(events_collection) {
+
+    events_collection$distinct("tutorial")
+
+}
+
 #' Looks up the most recent name associated with each user
 #'
 #' @param events_collection Mongo collection objects pointing to the events
@@ -95,11 +107,16 @@ identify_users <- function(events_collection) {
 #'
 #' @param events_collection Mongo collection object for events collection
 #' @param events A tibble derived from \code{fetch_events()}
+#' @param tutotial The name of the tutorial for which events are requested.
+#'   NULL = all tutorials.
 #' @returns A tibble of statistics for each survey question.
 #' @export
-fetch_events <- function(events_collection) {
-  events <-
-    events_collection$find()
+fetch_events <- function(events_collection, tutorial = NULL) {
+
+  query <- "{}"
+  if(!is.null(tutorial)) query = mongobits::j(tutorial = tutorial)
+
+  events <- events_collection$find(query = query)
 
   # check for handled events
   un_event <- !events$event %in% c("exercise_submitted", "exercise_result", "question_submission", "exercise_hint", "session_start", "session_stop")
@@ -149,7 +166,7 @@ fetch_events <- function(events_collection) {
 
 #' @rdname fetch_events
 #' @export
-event_stats <- function(events) {
+event_stats <- function(events, events_collection) {
   questions_by_user <-
     dplyr::cross_join(
       events |> dplyr::group_by(user) |> dplyr::summarize(),
