@@ -130,6 +130,7 @@ fetch_events <- function(events_collection, tutorial = NULL) {
     extract_event_data("id", "event_id") |>
     extract_event_data("restore", "restored") |>
     extract_event_data("code") |>
+    extract_event_data("answer") |>
     extract_event_data("output") |>
     extract_event_data("checked") |>
     extract_event_data("correct", "quest_correct") |>
